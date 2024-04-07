@@ -1,0 +1,212 @@
+---
+title: "Nitrate analysis"
+author: "Abby Saks"
+date: "2024-03-13"
+output: html_document
+---
+
+```{r Libraries}
+
+library(lme4) # mixed models
+library(glmmTMB) # mixed models, but has extra error distributions
+library(bbmle) # model selection, i.e., AIC
+library(car) # model selection, i.e., LR tests
+library(msm) # delta method
+library(tidyverse)
+library(ggiraph)
+library(ggthemes)
+library("ggpubr")
+library(ggplot2)
+
+```
+# Import data
+
+```{r}
+
+all_data <- readRDS(here::here("3_Clean-data", "soil_plot_data.rds"))
+depth_0To15 <- readRDS(here::here("3_Clean-data", "data_0To15.rds"))
+depth_15To30 <- readRDS(here::here("3_Clean-data", "data_15To30.rds"))
+depth_30To60 <- readRDS(here::here("3_Clean-data", "data_30To60.rds"))
+depth_60To100 <- readRDS(here::here("3_Clean-data", "data_60To100.rds"))
+depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
+
+```
+
+#Data exploration
+
+
+```{r linear models}
+
+all_data <- all_data[1:105, ]
+
+all_data <- all_data %>%
+  filter(sample_ID != "Compost")
+
+lmConductivity <- lm(conductivity_Micromhos ~ years_RA+Depth_avg, data = all_data)
+summary(lmConductivity)
+
+```
+
+``` {r plots all depths}
+
+##All depths for Nitrate
+ggplot(all_data,aes(y=conductivity_Micromhos, x=years_RA, color=Depth_avg)) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Conductvity (micromhos)") +
+  ggtitle("Effects of Farming on Conductivity for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+coord_cartesian(ylim = c(0, 1500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+
+``` {r individual depth graphs}
+
+##Depth 0 to 15 Conductivity graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = conductivity_Micromhos), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = conductivity_Micromhos), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Conductivity (micromhos)") +
+  ggtitle("Conductivity at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+coord_cartesian(ylim = c(0, 500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 15 to 30 Conductivity graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = conductivity_Micromhos), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = conductivity_Micromhos), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Conductivity (micromhos)") +
+  ggtitle("Conductivity at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+coord_cartesian(ylim = c(0, 500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 30 to 60 Conductivity graphing
+ggplot(depth_30To60, aes(x = years_RA)) +
+  geom_point(aes(y = conductivity_Micromhos), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = conductivity_Micromhos), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Conductivity (micromhos)") +
+  ggtitle("Conductivity at Depth 30-60 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+coord_cartesian(ylim = c(0,500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 60 to 100 Conductivity graphing
+ggplot(depth_60To100, aes(x = years_RA)) +
+  geom_point(aes(y = conductivity_Micromhos), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = conductivity_Micromhos), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Conductivity (micromhos)") +
+  ggtitle("Conductivity at Depth 60-100 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+coord_cartesian(ylim = c(0, 500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 100 to 150 Conductivity graphing
+ggplot(depth_100To150, aes(x = years_RA)) +
+  geom_point(aes(y = conductivity_Micromhos), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = conductivity_Micromhos), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Conductivity (micromhos)") +
+  ggtitle("Conductivity at Depth 100-150 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+coord_cartesian(ylim = c(0, 500), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+```{r stats stuff}
+
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = all_data))
+
+t.test(conductivity_Micromhos ~ o_or_I, data = all_data)
+
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = depth_0To15))
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = depth_15To30))
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = depth_30To60))
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = depth_60To100))
+summary(aov(conductivity_Micromhos ~ factor(years_RA), data = depth_100To150))
+
+```
+
+```{r tTest}
+
+t.test(conductivity_Micromhos ~ o_or_I, data = depth_0To15)
+t.test(conductivity_Micromhos ~ o_or_I, data = depth_15To30)
+t.test(conductivity_Micromhos ~ o_or_I, data = depth_30To60)
+t.test(conductivity_Micromhos ~ o_or_I, data = depth_60To100)
+t.test(conductivity_Micromhos ~ o_or_I, data = depth_100To150)
+
+```
+
+```{r box plots}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(conductivity_Micromhos, na.rm = TRUE),
+    sd = sd(conductivity_Micromhos, na.rm = TRUE)
+  )
+
+ggboxplot(all_data, x = "subsample_Depth", y = "conductivity_Micromhos", 
+          color = "o_or_I",
+          ylab = "Conductivity (micromhos)", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+
+```
+
+```{r profiles stuff}
+
+group_by(all_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(conductivity_Micromhos, na.rm = TRUE),
+    sd = sd(conductivity_Micromhos, na.rm = TRUE)
+  )
+
+all_data$subsample_Depth <- factor(all_data$subsample_Depth, 
+                                   levels = c("0-15", "15-30", "30-60", "60-100", "100-150"))
+
+ggplot(data = inside_data, aes(x = subsample_Depth, y = conductivity_Micromhos, color=subsample_Depth)) + geom_boxplot()+ 
+  labs(title = "Conductivity by Depth", 
+       x = "Depth", y = "Conductivity (micromhos)") +
+  theme_minimal()
+
+summary(aov(conductivity_Micromhos ~ Depth_avg, data = all_data))
+
+```
+
+```{r stuff}
+
+inside_data <- all_data %>%
+  filter(o_or_I != "O")
+outside_data <- all_data %>%
+  filter(o_or_I != "I")
+
+ggboxplot(inside_data, x = "subsample_Depth", y = "conductivity_Micromhos", 
+          color = "subsample_Depth",
+          ylab = "Conductivity", xlab = "Depth",
+          legend.title = "Depth") +
+  theme_minimal()
+
+
+group_by(inside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(conductivity_Micromhos, na.rm = TRUE),
+    sd = sd(conductivity_Micromhos, na.rm = TRUE)
+  )
+
+group_by(outside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(conductivity_Micromhos, na.rm = TRUE),
+    sd = sd(conductivity_Micromhos, na.rm = TRUE)
+  )
+
+```
+```

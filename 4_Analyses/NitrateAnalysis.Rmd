@@ -1,0 +1,225 @@
+---
+title: "Nitrate analysis"
+author: "Abby Saks"
+date: "2024-03-13"
+output: html_document
+---
+
+```{r Libraries}
+
+library(lme4) # mixed models
+library(glmmTMB) # mixed models, but has extra error distributions
+library(bbmle) # model selection, i.e., AIC
+library(car) # model selection, i.e., LR tests
+library(msm) # delta method
+library(tidyverse)
+library(ggiraph)
+library(ggthemes)
+library("ggpubr")
+library(ggplot2)
+library(devtools)
+
+```
+
+# Import data
+
+```{r}
+
+all_data <- readRDS(here::here("3_Clean-data", "soil_plot_data.rds"))
+depth_0To15 <- readRDS(here::here("3_Clean-data", "data_0To15.rds"))
+depth_15To30 <- readRDS(here::here("3_Clean-data", "data_15To30.rds"))
+depth_30To60 <- readRDS(here::here("3_Clean-data", "data_30To60.rds"))
+depth_60To100 <- readRDS(here::here("3_Clean-data", "data_60To100.rds"))
+depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
+
+```
+
+#Data exploration
+
+
+```{r linear models}
+
+lmNitrate <- lm(nitrate_ppb ~ years_RA+Depth_avg, data = all_data)
+summary(lmNitrate)
+
+all_data <- all_data %>%
+  filter(sample_ID != "Compost")
+
+```
+
+``` {r plots all depths}
+
+##All depths for Nitrate
+ggplot(all_data,aes(y=nitrate_ppb, x=years_RA, color=Depth_avg)) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Effects of Farming on Nitrate Concentration for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0, 80), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+
+``` {r individual depth graphs}
+
+##Depth 0 to 15 Nitrate graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = nitrate_ppb), size = 3, alpha = 0.3) +
+geom_smooth(aes(x = years_RA, y = nitrate_ppb), method = "lm", se = TRUE, color = "blue") +  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Nitrate Concentration at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+      coord_cartesian(ylim = c(0, 50), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 15 to 30 Nitrate graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = nitrate_ppb), size = 3, alpha = 0.3) +
+geom_smooth(aes(x = years_RA, y = nitrate_ppb), method = "lm", se = TRUE, color = "blue") +  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Nitrate Concentration at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+      coord_cartesian(ylim = c(0, 50), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 30 to 60 Nitrate graphing
+ggplot(depth_30To60, aes(x = years_RA)) +
+  geom_point(aes(y = nitrate_ppb), size = 3, alpha = 0.3) +
+geom_smooth(aes(x = years_RA, y = nitrate_ppb), method = "lm", se = TRUE, color = "blue") +  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Nitrate Concentration at Depth 30-60 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+      coord_cartesian(ylim = c(0, 50), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 60 to 100 Nitrate graphing
+ggplot(depth_60To100, aes(x = years_RA)) +
+  geom_point(aes(y = nitrate_ppb), size = 3, alpha = 0.3) +
+geom_smooth(aes(x = years_RA, y = nitrate_ppb), method = "lm", se = TRUE, color = "blue") +  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Nitrate Concentration at Depth 60-100 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+      coord_cartesian(ylim = c(0, 50), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 100 to 150 Nitrate graphing
+ggplot(depth_100To150, aes(x = years_RA)) +
+  geom_point(aes(y = nitrate_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = nitrate_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Nitrate Concentration at Depth 100-150 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+    coord_cartesian(ylim = c(0, 50), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+```{r stats stuff}
+
+summary(aov(nitrate_ppb ~ factor(years_RA), data = all_data))
+
+t.test(nitrate_ppb ~ o_or_I, data = all_data)
+
+t.test(nitrate_ppb ~ o_or_I, data = depth_0To15)
+t.test(nitrate_ppb ~ o_or_I, data = depth_15To30)
+t.test(nitrate_ppb ~ o_or_I, data = depth_30To60)
+t.test(nitrate_ppb ~ o_or_I, data = depth_60To100)
+t.test(nitrate_ppb ~ o_or_I, data = depth_100To150)
+
+```
+
+```{r box plots}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(nitrate_ppb, na.rm = TRUE),
+    sd = sd(nitrate_ppb, na.rm = TRUE)
+  )
+
+ggboxplot(all_data, x = "subsample_Depth", y = "nitrate_ppb", 
+          color = "o_or_I",
+          ylab = "Nitrate(ppb)", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+
+```
+
+
+```{r profiles stuff}
+
+
+inside_data <- all_data %>%
+  filter(o_or_I != "O")
+outside_data <- all_data %>%
+  filter(o_or_I != "I")
+
+errorInside <- inside_data %>%
+  group_by(subsample_Depth) %>%
+  summarise(
+    count = n(),
+    mean = mean(nitrate_ppb, na.rm = TRUE),
+    se = sd(nitrate_ppb, na.rm = TRUE)/sqrt(length(nitrate_ppb))
+  )
+errorOutside <- outside_data %>%
+  group_by(subsample_Depth) %>%
+  summarise(
+    count = n(),
+    mean = mean(nitrate_ppb, na.rm = TRUE),
+    se = sd(nitrate_ppb, na.rm = TRUE)/sqrt(length(nitrate_ppb))
+  )
+
+all_data$subsample_Depth <- factor(all_data$subsample_Depth, 
+                                   levels = c("0-15", "15-30", "30-60", "60-100", "100-150"))
+
+combined_error <- bind_rows(
+  mutate(errorInside, category = "Inside"),
+  mutate(errorOutside, category = "Outside")
+)
+
+ggplot() +
+  geom_bar(data = combined_error, aes(x = factor(subsample_Depth), y = mean, fill = category),
+           stat = "identity", position = position_dodge()) +
+  geom_errorbar(data = combined_error, aes(x = factor(subsample_Depth), y = mean,
+                                            ymin = mean - se, ymax = mean + se, color = category),
+                width = 0.2, position = position_dodge(width=0.8)) +
+  labs(x = "Depth (cm)", y = "Nitrate Concentration (ppb)", title = "Nitrate Depth Comparison") +
+  scale_fill_manual(values = c("salmon", "lightblue")) +
+  scale_color_manual(values = c("black", "black")) +
+  theme_minimal()
+
+
+
+ggplot(data = inside_data, aes(x = Depth_avg, y = nitrate_ppb)) +
+  geom_point() + 
+    geom_smooth_interactive(aes(x = Depth_avg, y = nitrate_ppb), se = TRUE, color = "blue") +
+  labs(title = "Obesity by State", 
+       x = "State", y = "Adult Obesity (%)")
+
+```
+
+```{r more}
+summary(aov(nitrate_ppb ~ Depth_avg, data = all_data))
+
+summary(aov(nitrate_ppb ~ years_RA, data = depth_0To15))
+summary(aov(nitrate_ppb ~ years_RA, data = depth_15To30))
+summary(aov(nitrate_ppb ~ years_RA, data = depth_30To60))
+summary(aov(nitrate_ppb ~ years_RA, data = depth_60To100))
+summary(aov(nitrate_ppb ~ years_RA, data = depth_100To150))
+
+
+group_by(inside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(nitrate_ppb, na.rm = TRUE),
+    sd = sd(nitrate_ppb, na.rm = TRUE)
+)
+
+group_by(outside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(nitrate_ppb, na.rm = TRUE),
+    sd = sd(nitrate_ppb, na.rm = TRUE)
+  )
+
+```

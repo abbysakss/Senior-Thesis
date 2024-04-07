@@ -1,0 +1,133 @@
+---
+title: "Ammonia analysis"
+author: "Abby Saks"
+date: "2024-03-30"
+output: html_document
+---
+
+```{r Libraries}
+
+library(lme4) # mixed models
+library(glmmTMB) # mixed models, but has extra error distributions
+library(bbmle) # model selection, i.e., AIC
+library(car) # model selection, i.e., LR tests
+library(msm) # delta method
+library(tidyverse)
+library(ggiraph)
+library(ggthemes)
+library("ggpubr")
+library(ggplot2)
+
+```
+# Import data
+
+```{r}
+
+all_data <- readRDS(here::here("3_Clean-data", "soil_plot_data.rds"))
+depth_0To15 <- readRDS(here::here("3_Clean-data", "data_0To15.rds"))
+depth_15To30 <- readRDS(here::here("3_Clean-data", "data_15To30.rds"))
+depth_30To60 <- readRDS(here::here("3_Clean-data", "data_30To60.rds"))
+depth_60To100 <- readRDS(here::here("3_Clean-data", "data_60To100.rds"))
+depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
+
+```
+
+#Data exploration
+
+
+```{r linear models}
+
+lmAmmonia <- lm(ammonia_ppb ~ years_RA*Depth_avg, data = all_data)
+summary(lmAmmonia)
+
+all_data <- all_data %>%
+  filter(sample_ID != "Compost")
+
+```
+
+``` {r plots all depths}
+
+##All depths for Ammonia
+ggplot(all_data,aes(y=ammonia_ppb, x=years_RA, color=Depth_avg)) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Nitrate (ppb)") +
+  ggtitle("Effects of Farming on Nitrate Concentration for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+   geom_text(x = 3, 
+            y = 10, 
+            label = eq)
+
+```
+
+
+``` {r individual depth graphs}
+
+##Depth 0 to 15 Ammonia graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = ammonia_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = ammonia_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Ammonia (ppb)") +
+  ggtitle("Ammonia Concentration at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 15 to 30 Ammonia graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = ammonia_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = ammonia_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Ammonia (ppb)") +
+  ggtitle("Ammonia Concentration at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 30 to 60 Ammonia graphing
+ggplot(depth_30To60, aes(x = years_RA)) +
+  geom_point(aes(y = ammonia_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = ammonia_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Ammonia (ppb)") +
+  ggtitle("Ammonia Concentration at Depth 30-60 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 60 to 100 Ammonia graphing
+ggplot(depth_60To100, aes(x = years_RA)) +
+  geom_point(aes(y = ammonia_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = ammonia_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Ammonia (ppb)") +
+  ggtitle("Ammonia Concentration at Depth 60-100 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 100 to 150 Ammonia graphing
+ggplot(depth_100To150, aes(x = years_RA)) +
+  geom_point(aes(y = ammonia_ppb), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = ammonia_ppb), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Ammonia (ppb)") +
+  ggtitle("Ammonia Concentration at Depth 100-150 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+```
+
+```{r stats stuff}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(ammonia_ppb, na.rm = TRUE),
+    sd = sd(ammonia_ppb, na.rm = TRUE)
+  )
+
+summary(aov(ammonia_ppb ~ years_RA, data = all_data))
+
+t.test(ammonia_ppb ~ o_or_I, data = all_data)
+
+```
+
+```{r box plots}
+
+ggboxplot(all_data, x = "subsample_Depth", y = "ammonia_ppb", 
+          color = "o_or_I",
+          ylab = "Ammonia (ppb)", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+```
+

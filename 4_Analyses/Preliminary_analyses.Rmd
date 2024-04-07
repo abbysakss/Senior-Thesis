@@ -1,0 +1,421 @@
+---
+title: "pH analysis"
+author: "Abby Saks"
+date: "2024-03-13"
+output: html_document
+---
+
+
+```{r Libraries}
+
+library(lme4) # mixed models
+library(glmmTMB) # mixed models, but has extra error distributions
+library(bbmle) # model selection, i.e., AIC
+library(car) # model selection, i.e., LR tests
+library(msm) # delta method
+library(tidyverse)
+library(ggiraph)
+library(ggthemes)
+library("ggpubr")
+library(ggplot2)
+
+```
+# Import data
+
+```{r}
+
+all_data <- readRDS(here::here("3_Clean-data", "soil_plot_data.rds"))
+depth_0To15 <- readRDS(here::here("3_Clean-data", "data_0To15.rds"))
+depth_15To30 <- readRDS(here::here("3_Clean-data", "data_15To30.rds"))
+depth_30To60 <- readRDS(here::here("3_Clean-data", "data_30To60.rds"))
+depth_60To100 <- readRDS(here::here("3_Clean-data", "data_60To100.rds"))
+depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
+
+```
+
+
+
+#Data exploration
+
+```{r}
+
+with(all_data, plot(years_RA, resp1))
+with(all_data, plot(years_RA, pH_water))
+
+with(all_data, hist(nitrate_ppb))
+with(all_data, hist(pH_salt))
+
+```
+
+```{r organizingByDepth}
+
+all_data <- all_data %>%
+  filter(sample_ID != "Compost")
+all_data <- all_data[1:105, ]
+
+lmWaterPH <- lm(pH_water ~ years_RA+Depth_avg, data = all_data)
+summary(lmWaterPH)
+sigma(lmWaterPH)
+
+lmSaltPH <- lm(pH_salt ~ years_RA+Depth_avg, data = all_data)
+summary(lmSaltPH)
+sigma(lmWaterPH)
+
+```
+
+```{r lms profile}
+
+lmDepthWater <- lm(pH_water ~ Depth_avg, data = all_data)
+summary(lmDepthWater)
+
+lmDepthSalt <- lm(pH_salt ~ Depth_avg, data = all_data)
+summary(lmDepthSalt)
+
+```
+
+``` {r plots all depths}
+
+##All depths for water pH
+ggplot(all_data,aes(y=pH_water, x=years_RA, color=Depth_avg)) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Water pH", color = "Average Depth (cm)") +
+  ggtitle("Effects of Farming on Water pH for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##All depths for salt pH
+ggplot(all_data, aes(y=pH_salt, x=years_RA, color=Depth_avg)) +
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Salt pH", color = "Average Depth (cm)") +
+  ggtitle("Effects of Farming on Salt pH for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+
+``` {r individual depth graphs}
+
+##Depth 0 to 15 pH graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = pH_salt, color = "pH_salt"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_salt), method = "lm", se = TRUE, color = "blue") +
+  geom_point(aes(y = pH_water, color = "pH_water"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_water), method = "lm", se = TRUE, color = "red") +
+  labs(x = "Age of Bed (years)", y = "pH", color="Key") +
+  ggtitle("Water and Salt pH at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+  scale_color_manual(values = c(pH_salt = "blue", pH_water = "red"),
+    labels = c(pH_salt = "Salt pH", pH_water = "Water pH")) +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 15 to 30 pH graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = pH_salt, color = "pH_salt"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_salt), method = "lm", se = TRUE, color = "blue") +
+  geom_point(aes(y = pH_water, color = "pH_water"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_water), method = "lm", se = TRUE, color = "red") +
+  labs(x = "Age of Bed (years)", y = "pH", color="Key") +
+  ggtitle("Water and Salt pH at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+  scale_color_manual(values = c(pH_salt = "blue", pH_water = "red"),
+    labels = c(pH_salt = "Salt pH", pH_water = "Water pH")) +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 30 to 60 pH graphing
+ggplot(depth_30To60, aes(x = years_RA)) +
+  geom_point(aes(y = pH_salt, color = "pH_salt"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_salt), method = "lm", se = TRUE, color = "blue") +
+  geom_point(aes(y = pH_water, color = "pH_water"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_water), method = "lm", se = TRUE, color = "red") +
+  labs(x = "Age of Bed (years)", y = "pH", color="Key") +
+  ggtitle("Water and Salt pH at Depth 30-60 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+  scale_color_manual(values = c(pH_salt = "blue", pH_water = "red"),
+    labels = c(pH_salt = "Salt pH", pH_water = "Water pH")) +
+ coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 60 to 100 pH graphing
+ggplot(depth_60To100, aes(x = years_RA)) +
+  geom_point(aes(y = pH_salt, color = "pH_salt"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_salt), method = "lm", se = TRUE, color = "blue") +
+  geom_point(aes(y = pH_water, color = "pH_water"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_water), method = "lm", se = TRUE, color = "red") +
+  labs(x = "Age of Bed (years)", y = "pH", color="Key") +
+  ggtitle("Water and Salt pH at Depth 60-100 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+   scale_color_manual(values = c(pH_salt = "blue", pH_water = "red"),
+    labels = c(pH_salt = "Salt pH", pH_water = "Water pH")) +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 100 to 150 pH graphing
+ggplot(depth_100To150, aes(x = years_RA)) +
+  geom_point(aes(y = pH_salt, color = "pH_salt"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_salt), method = "lm", se = TRUE, color = "blue") +
+  geom_point(aes(y = pH_water, color = "pH_water"), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = pH_water), method = "lm", se = TRUE, color = "red") +
+  labs(x = "Age of Bed (years)", y = "pH", color="Key") +
+  ggtitle("Water and Salt pH at Depth 100-150 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+ scale_color_manual(values = c(pH_salt = "blue", pH_water = "red"),
+    labels = c(pH_salt = "Salt pH", pH_water = "Water pH")) +
+coord_cartesian(ylim = c(3.5, 8), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+
+```
+
+```{r stats stuff}
+
+summary(aov(pH_water ~ factor(years_RA), data = all_data))
+summary(aov(pH_salt ~ factor(years_RA), data = all_data))
+
+t.test(pH_water ~ o_or_I, data = all_data)
+t.test(pH_salt ~ o_or_I, data = all_data)
+
+```
+
+```{r water}
+
+t.test(pH_water ~ o_or_I, data = depth_0To15)
+t.test(pH_water ~ o_or_I, data = depth_15To30)
+t.test(pH_water ~ o_or_I, data = depth_30To60)
+t.test(pH_water ~ o_or_I, data = depth_60To100)
+t.test(pH_water ~ o_or_I, data = depth_100To150)
+
+```
+
+
+```{r salt}
+
+t.test(pH_salt ~ o_or_I, data = depth_0To15)
+t.test(pH_salt ~ o_or_I, data = depth_15To30)
+t.test(pH_salt ~ o_or_I, data = depth_30To60)
+t.test(pH_salt ~ o_or_I, data = depth_60To100)
+t.test(pH_salt ~ o_or_I, data = depth_100To150)
+
+```
+
+```{r}
+
+
+
+summary(aov(pH_water ~ years_RA, data = depth_0To15))
+summary(aov(pH_water ~ years_RA, data = depth_15To30))
+summary(aov(pH_water ~ years_RA, data = depth_30To60))
+summary(aov(pH_water ~ years_RA, data = depth_60To100))
+summary(aov(pH_water ~ years_RA, data = depth_100To150))
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(pH_water, na.rm = TRUE),
+    sd = sd(pH_water, na.rm = TRUE)
+  )
+
+```
+
+```{r box plots}
+
+ggboxplot(all_data, x = "subsample_Depth", y = "pH_water", 
+          color = "o_or_I",
+          ylab = "Water pH", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+ggboxplot(all_data, x = "subsample_Depth", y = "pH_salt", 
+          color = "o_or_I",
+          ylab = "Salt pH", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+```
+
+```{r stuff}
+
+inside_data <- all_data %>%
+  filter(o_or_I != "O")
+outside_data <- all_data %>%
+  filter(o_or_I != "I")
+
+ggboxplot(inside_data, x = "subsample_Depth", y = "pH_water", 
+          color = "subsample_Depth",
+          ylab = "Water pH", xlab = "Depth",
+          legend.title = "Depth") +
+  theme_minimal()
+
+
+ggboxplot(inside_data, x = "subsample_Depth", y = "pH_salt", 
+          color = "subsample_Depth",
+          ylab = "Water pH", xlab = "Depth",
+          legend.title = "Depth") +
+  theme_minimal()
+
+group_by(inside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(pH_water, na.rm = TRUE),
+    sd = sd(pH_water, na.rm = TRUE)
+  )
+
+group_by(inside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(pH_salt, na.rm = TRUE),
+    sd = sd(pH_salt, na.rm = TRUE)
+  )
+group_by(outside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(pH_water, na.rm = TRUE),
+    sd = sd(pH_water, na.rm = TRUE)
+  )
+
+group_by(outside_data, Depth_avg) %>%
+  summarise(
+    count = n(),
+    mean = mean(pH_salt, na.rm = TRUE),
+    sd = sd(pH_salt, na.rm = TRUE)
+  )
+
+```
+
+```{r profiles stuff}
+
+inside_data <- all_data %>%
+  filter(o_or_I != "O") %>%
+  pull(o_or_I) %>%
+  as.character()
+
+```
+
+
+```{r extra plots in case}
+
+ggboxplot(all_data, x = "Depth_avg", y = "pH_water", 
+          color = "years_RA",
+          ylab = "pH", xlab = "years RA")
+
+ggline(all_data, x = "Depth_avg", y = "pH_water", 
+       add = c("mean_se", "jitter"), 
+       ylab = "TEST", xlab = "Treatment")
+
+boxplot(pH_water~years_RA,data=all_data, main="pH by years",
+   xlab="Years RA", ylab="pH Water")  +
+  theme_calc()
+
+```
+
+
+## Molly's graphs
+
+```{r, error = f, message = f}
+
+ggplot(all_data, aes(x=Depth_avg, color = years_RA, y=pH_water)) + 
+  geom_line(lwd = 2) +
+  scale_color_gradient(low = "darkblue", high = "red") +
+  theme_calc()
+
+```
+
+```{r}
+
+pH_factor <- as.factor(all_data$years_RA)
+
+ggplot(all_data, aes(x=Depth_avg, color = years_RA, y=pH_water)) + 
+  geom_line(lwd = 2) +
+  scale_color_gradient(low = "darkblue", high = "red") +
+  theme_calc()
+
+```
+
+
+```{r}
+
+ggplot(all_data, aes(x=Depth_avg, y=pH_water)) + 
+  geom_point(aes(color=years_RA)) +
+  theme_calc()
+
+```
+
+
+## Mixed models
+
+
+### Respiration
+
+```{r Respiration - model building }
+
+# step 1: evaluate random effects
+rm1 <- lmer(resp1 ~ years_RA*Depth_avg + (1|sample_ID), data = all_data)
+rm2 <- lm(resp1 ~ years_RA*Depth_avg, data = all_data)
+bbmle::ICtab(rm1, rm2) # rm1 wins
+
+plot(rm2) # seems to meet assumptions of normality
+
+car::Anova(rm1)
+
+rm1a <- lmer(resp1 ~ years_RA + Depth_avg + (1|sample_ID), data = all_data)
+car::Anova(rm1a)
+
+fixef(rm1a)
+
+```
+
+```{r create dataset for plotting }
+
+rep_dat <- data.frame(expand.grid(years_RA = 0:13,
+                                  Depth_avg = seq(0, 30, 5)))
+
+rep_dat$predict <- fixef(rm1a)[1] + fixef(rm1a)[2]*rep_dat$years_RA + fixef(rm1a)[3]*rep_dat$Depth_avg
+
+rep_dat$se <- NA
+for(i in 1:nrow(rep_dat)){
+  yrs <- rep_dat$years_RA[i]
+  dep <- rep_dat$Depth_avg[i]
+  
+  rep_dat$se[i] <- msm::deltamethod(~x1 + x2*yrs + x3*dep, fixef(rm1a), vcov(rm1a)) 
+  
+}
+
+rep_dat$UCI <- rep_dat$predict + 1.96*rep_dat$se
+rep_dat$LCI <- rep_dat$predict - 1.96*rep_dat$se
+
+
+
+```
+
+```{r}
+
+
+ggplot(rep_dat, aes(x = years_RA, y = Depth_avg)) + geom_ribbon(aes(ymin = rep_dat$LCI, ymax=UCI), fill = "blue") + geom_line()
+
+```
+
+```{r}
+
+respiration_df <- all_data[!is.na(all_data$resp1), ]
+
+ggplot(data = respiration_df, mapping = aes(x = years_RA, y = resp1, color = Depth_avg)) + 
+  geom_point()
+
+model <- aov(resp1 ~ years_RA + Depth_avg, data = respiration_df)
+
+# Summarize ANOVA results
+summary(model)
+
+```
+
+
+
+
+

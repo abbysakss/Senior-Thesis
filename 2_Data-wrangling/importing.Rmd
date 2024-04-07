@@ -1,0 +1,93 @@
+title: Importing data
+author: Abby Saks
+output:
+  html_document
+  
+```{r Libraries }
+
+library("tidyverse")
+library("here")
+library(dplyr)
+
+```
+
+
+```{r ah}
+
+soilData <- read.csv("/Users/abbysaks/Desktop/research/soil_Total.csv")
+plotYears <- read.csv("/Users/abbysaks/Desktop/research/PlotYears.csv")
+
+drop <- c("X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9", "X.10","X.11", "X.12", "X.13", "X.14","X.15", "X.16", "X.17")
+plotYears = plotYears[,!(names(plotYears) %in% drop)]
+
+plotYears[38, "bed_ID"] <- "RS - 13"
+soilData[94, "bed_ID"] <- "RS - 23"
+soilData[101, "bed_ID"] <- "RN - 12"
+
+view(plotYears)
+view(soilData)
+
+```
+
+
+```{r}
+
+all_data<- full_join(soilData, plotYears %>% select(bed_ID, years_RA))
+
+drop <- c("X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9", "X.10","X.11", "X.12", "X.13")
+all_data = all_data[,!(names(all_data) %in% drop)]
+
+view(all_data)
+
+```
+```{r}
+
+for(i in 1:nrow(all_data)){
+  all_data$Depth_start[i] <- as.numeric(strsplit(all_data$subsample_Depth, split="-")[[i]][1])
+  all_data$Depth_end[i] <- as.numeric(strsplit(all_data$subsample_Depth, split="-")[[i]][2])
+}
+
+all_data$Depth_avg <- (all_data$Depth_start + all_data$Depth_end)/2
+
+```
+
+```{r}
+
+str(all_data)
+all_data <- all_data %>% 
+  rename(
+    resp1 = Respiration_mgCO2PerGram)
+View(all_data)
+
+```
+
+```{r organizing}
+
+depth_0To15 <- all_data %>% 
+  filter(Depth_avg %in% c(7.5))  # Filter for depth 0 -15 (Depth_avg=7.5)
+depth_15To30 <- all_data %>% 
+  filter(Depth_avg %in% c(22.5))  # Filter for depth 15 - 30 (Depth_avg=22.5)
+depth_30To60  <- all_data %>% 
+  filter(Depth_avg %in% c(45.0))  # Filter for depth 30 - 60 (Depth_avg=45)
+depth_60To100  <- all_data %>% 
+  filter(Depth_avg %in% c(80.0))  # Filter for depth 60 - 100 (Depth_avg=80)
+depth_100To150  <- all_data %>% 
+  filter(Depth_avg %in% c(125.0))  # Filter for depth 100 - 150 (Depth_avg=125)
+
+```
+
+```{r}
+
+saveRDS(all_data, file = here::here("3_Clean-data", "soil_plot_data.rds"))
+
+saveRDS(depth_0To15, file = here::here("3_Clean-data", "data_0To15.rds"))
+saveRDS(depth_15To30, file = here::here("3_Clean-data", "data_15To30.rds"))
+saveRDS(depth_30To60, file = here::here("3_Clean-data", "data_30To60.rds"))
+saveRDS(depth_60To100, file = here::here("3_Clean-data", "data_60To100.rds"))
+saveRDS(depth_100To150, file = here::here("3_Clean-data", "data_100To150.rds"))
+
+
+```
+
+
+

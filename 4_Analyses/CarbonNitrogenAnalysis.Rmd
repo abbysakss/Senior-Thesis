@@ -1,0 +1,244 @@
+---
+title: "Nitrate analysis"
+author: "Abby Saks"
+date: "2024-03-13"
+output: html_document
+---
+
+```{r Libraries}
+
+library(lme4) # mixed models
+library(glmmTMB) # mixed models, but has extra error distributions
+library(bbmle) # model selection, i.e., AIC
+library(car) # model selection, i.e., LR tests
+library(msm) # delta method
+library(tidyverse)
+library(ggiraph)
+library(ggthemes)
+library("ggpubr")
+library(ggplot2)
+
+```
+# Import data
+
+```{r}
+
+all_data <- readRDS(here::here("3_Clean-data", "soil_plot_data.rds"))
+depth_0To15 <- readRDS(here::here("3_Clean-data", "data_0To15.rds"))
+depth_15To30 <- readRDS(here::here("3_Clean-data", "data_15To30.rds"))
+depth_30To60 <- readRDS(here::here("3_Clean-data", "data_30To60.rds"))
+depth_60To100 <- readRDS(here::here("3_Clean-data", "data_60To100.rds"))
+depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
+
+```
+
+#Data exploration
+
+```{r organizing}
+all_data <- all_data %>%
+  filter(sample_ID != "Compost") %>%
+  filter(Depth_avg == 7.5| Depth_avg ==22.5)
+
+```
+
+```{r linear models}
+
+lmCarbon <- lm(percent_Carbon ~ years_RA+Depth_avg, data = all_data)
+summary(lmCarbon)
+
+lmNitrogen <- lm(percent_Nitrogen ~ years_RA+Depth_avg, data = all_data)
+summary(lmNitrogen)
+
+lmCN <- lm(cN_ratio ~ years_RA+Depth_avg, data = all_data)
+summary(lmCN)
+
+```
+
+
+``` {r plots all depths}
+
+depth_colors <- c("7.5" = "darkblue", "22.5" = "lightblue")
+
+##All depths for Carbon
+ggplot(all_data,aes(y=percent_Carbon, x=years_RA, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Carbon (%)") +
+  ggtitle("Effects of Farming on Carbon Concentration for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+  scale_color_manual(values = depth_colors,
+                     breaks = c("7.5", "22.5"),
+                     labels = c("0-15 cm", "15-30 cm")) +
+  labs(color = "Depth") +
+  coord_cartesian(xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##All depths for Nitrogen
+ggplot(all_data,aes(y=percent_Nitrogen, x=years_RA, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Nitrogen (%)") +
+  ggtitle("Effects of Farming on Nitrogen Concentration for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+    scale_color_manual(values = depth_colors,
+                     breaks = c("7.5", "22.5"),
+                     labels = c("0-15 cm", "15-30 cm")) +
+  labs(color = "Depth") +
+    coord_cartesian(xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##All depths for C:N
+ggplot(all_data,aes(y=cN_ratio, x=years_RA, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "C:N") +
+  ggtitle("Effects of Farming on C:N Ratio for Soil Across Depths") +
+  stat_smooth(method="lm",se=FALSE) +
+  theme_minimal() +
+    scale_color_manual(values = depth_colors,
+                     breaks = c("7.5", "22.5"),
+                     labels = c("0-15 cm", "15-30 cm")) +
+  labs(color = "Depth") +
+    coord_cartesian(xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+```
+
+
+``` {r individual depth graphs}
+
+##Depth 0 to 15 Carbon graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = percent_Carbon), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = percent_Carbon), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Carbon (%)") +
+  ggtitle("Carbon Concentration at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 15 to 30 Carbon graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = percent_Carbon), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = percent_Carbon), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Carbon (%)") +
+  ggtitle("Carbon Concentration at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+### NITROGEN TIME!
+
+##Depth 0 to 15 Nitrogen graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = percent_Nitrogen), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = percent_Nitrogen), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Nitrogen (%)") +
+  ggtitle("Nitrogen Concentration at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 15 to 30 Carbon graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = percent_Nitrogen), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = percent_Nitrogen), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Nitrogen (%)") +
+  ggtitle("Nitrogen Concentration at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+
+### C:N TIME!
+
+##Depth 0 to 15 Nitrogen graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = cN_ratio), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = cN_ratio), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "C:N") +
+  ggtitle("C:N Ratio at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+##Depth 15 to 30 Carbon graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = cN_ratio), size = 3, alpha = 0.3) +
+  geom_smooth_interactive(aes(x = years_RA, y = cN_ratio), color = "blue") +
+  labs(x = "Age of Bed (years)", y = "C:N") +
+  ggtitle("C:N Ratio at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal()
+
+```
+
+```{r stats carbon}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(percent_Carbon, na.rm = TRUE),
+    sd = sd(percent_Carbon, na.rm = TRUE)
+  )
+
+summary(aov(percent_Carbon ~ factor(years_RA), data = all_data))
+
+t.test(percent_Carbon ~ o_or_I, data = depth_0To15)
+t.test(percent_Carbon ~ o_or_I, data = depth_15To30)
+
+summary(aov(percent_Carbon ~ factor(years_RA), data = depth_0To15))
+summary(aov(percent_Nitrogen ~ factor(years_RA), data = depth_15To30))
+summary(aov(cN_ratio ~ factor(years_RA), data = depth_15To30))
+
+```
+
+```{r stats nitrogen}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(percent_Nitrogen, na.rm = TRUE),
+    sd = sd(percent_Nitrogen, na.rm = TRUE)
+  )
+
+summary(aov(percent_Nitrogen ~ factor(years_RA), data = all_data))
+
+t.test(percent_Nitrogen ~ o_or_I, data = all_data)
+
+t.test(percent_Nitrogen ~ o_or_I, data = depth_0To15)
+t.test(percent_Nitrogen ~ o_or_I, data = depth_15To30)
+
+```
+
+```{r stats C:N}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(cN_ratio, na.rm = TRUE),
+    sd = sd(cN_ratio, na.rm = TRUE)
+  )
+
+summary(aov(cN_ratio ~ factor(years_RA), data = all_data))
+
+t.test(cN_ratio ~ o_or_I, data = all_data)
+
+t.test(cN_ratio ~ o_or_I, data = depth_0To15)
+t.test(cN_ratio ~ o_or_I, data = depth_15To30)
+
+```
+
+```{r box plots}
+
+ggboxplot(all_data, x = "subsample_Depth", y = "percent_Carbon", 
+          color = "o_or_I",
+          ylab = "Carbon (%)", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+ggboxplot(all_data, x = "subsample_Depth", y = "percent_Nitrogen", 
+          color = "o_or_I",
+          ylab = "Nitrogen (%)", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+ggboxplot(all_data, x = "subsample_Depth", y = "cN_ratio", 
+          color = "o_or_I",
+          ylab = "C:N", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+```
+
