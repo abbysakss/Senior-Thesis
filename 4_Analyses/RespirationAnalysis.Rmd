@@ -47,6 +47,17 @@ all_data <- all_data %>%
 lmResp <- lm(resp1 ~ years_RA+Depth_avg, data = all_data)
 summary(lmResp)
 
+resR <- resid(lmResp)
+plot(fitted(lmResp), resR)
+abline(0,0)
+qqnorm(resR)
+qqline(resR)
+plot(density(resR))
+
+```
+
+```{r}
+
 depth_colors <- c("7.5" = "darkblue", "22.5" = "lightblue")
 
 ggplot(all_data, aes(y = resp1, x = years_RA, color = factor(Depth_avg))) + 
@@ -131,3 +142,275 @@ ggboxplot(all_data, x = "subsample_Depth", y = "repFull_Respiration",
 
 ```
 
+```{r efficiency analysis}
+
+all_data <- all_data %>%
+  mutate(efficiency = resp1/percent_Carbon)
+
+depth_0To15 <- depth_0To15 %>%
+    mutate(efficiency = resp1/percent_Carbon)
+
+depth_15To30 <- depth_15To30 %>%
+  mutate(efficiency = resp1/percent_Carbon)
+
+```
+
+```{r}
+
+group_by(all_data, Depth_avg) %>%
+  group_by(years_RA) %>%
+  summarise(
+    count = n(),
+    mean = mean(efficiency, na.rm = TRUE),
+    sd = sd(efficiency, na.rm = TRUE)
+  )
+
+t.test(efficiency ~ o_or_I, data = all_data)
+
+summary(aov(efficiency ~ factor(years_RA), data = all_data))
+
+summary(aov(efficiency ~ factor(years_RA), data = depth_0To15))
+
+summary(aov(efficiency ~ factor(years_RA), data = depth_15To30))
+
+t.test(efficiency ~ o_or_I, data = depth_0To15)
+t.test(efficiency ~ o_or_I, data = depth_15To30)
+
+lmEff <- lm(efficiency ~ years_RA+Depth_avg, data = all_data)
+summary(lmEff)
+
+resE <- resid(lmEff)
+plot(fitted(lmEff), resE)
+abline(0,0)
+qqnorm(resE)
+qqline(resE)
+plot(density(resE))
+
+```
+
+```{r graphing efficiency}
+
+##Depth 0 to 15 Resp graphing
+ggplot(depth_0To15, aes(x = years_RA)) +
+  geom_point(aes(y = efficiency), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = efficiency), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Respiration Efficiency") +
+  ggtitle("Respiration Efficiency at Depth 0-15 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+    coord_cartesian(ylim = c(0, 2), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+##Depth 15 to 30 Resp graphing
+ggplot(depth_15To30, aes(x = years_RA)) +
+  geom_point(aes(y = efficiency), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = years_RA, y = efficiency), method = "lm", se = TRUE, color = "blue") +
+  labs(x = "Age of Bed (years)", y = "Respiration Efficiency") +
+  ggtitle("Respiration Efficiency at Depth 15-30 cm Across Beds of Different Ages")  +
+  theme_minimal() +
+    coord_cartesian(ylim = c(0, 2), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+ggboxplot(all_data, x = "subsample_Depth", y = "efficiency", 
+          color = "o_or_I",
+          ylab = "Respiration Efficiency", xlab = "Depth",
+          legend.title = "Outside (O) or Inside (I)") +
+  theme_minimal()
+
+depth_colors <- c("7.5" = "darkblue", "22.5" = "lightblue")
+
+ggplot(all_data, aes(y = efficiency, x = years_RA, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Age of Bed (years)", y = "Resp. Efficiency (mg CO2/(g soil x % Carbon)") +
+  ggtitle("Effects of Farming on Resp. Efficiency for Soil Across Depths") +
+  stat_smooth(method = "lm", se = FALSE) +
+  theme_minimal() +
+  scale_color_manual(values = depth_colors,
+                     breaks = c("7.5", "22.5"),
+                     labels = c("0-15 cm", "15-30 cm")) +
+  labs(color = "Depth") +
+  coord_cartesian(ylim = c(0, 2), xlim= c(0, 13)) + 
+  scale_x_continuous(breaks = seq(0, 13, by = 1), minor_breaks = seq(0, 13, by = 1))
+
+
+```
+
+```{r resp x pH}
+
+ggplot(all_data, aes(y = efficiency, x = pH_water, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "pH", y = "Respiration Efficiency") +
+  ggtitle("Effects of Farming on Resp Efficiency for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE)
+
+ggplot(all_data, aes(y = resp1, x = pH_water, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "pH", y = "Respiration") +
+  ggtitle("Effects of Farming on Respiration for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE)
+
+```
+
+```{r}
+
+hist(depth_0To15$efficiency)
+hist(depth_15To30$efficiency)
+
+lm1 <- lm(efficiency ~ pH_water, data = depth_0To15)
+summary(lm1)
+lm2 <-lm(efficiency ~ pH_water, data = depth_15To30)
+summary(lm2)
+
+correlation1 <- cor(depth_0To15$efficiency, depth_0To15$pH_water)
+print(correlation1)
+cor.test(depth_0To15$efficiency, depth_0To15$pH_water)
+
+correlation2 <- cor(depth_15To30$efficiency, depth_15To30$pH_water)
+print(correlation2)
+cor.test(depth_15To30$efficiency, depth_15To30$pH_water)
+
+```
+
+```{r resp x conductivity}
+
+ggplot(all_data, aes(y = efficiency, x = conductivity_Micromhos, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Conductivity", y = "Respiration Efficiency") +
+  ggtitle("Effects of Farming on Resp Efficiency for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE)
+
+ggplot(all_data, aes(y = resp1, x = conductivity_Micromhos, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Conductivity", y = "Respiration") +
+  ggtitle("Effects of Farming on Respiration for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE) +
+  coord_cartesian(ylim = c(0, 2), xlim= c(0, 300))
+
+lmEffXCond <- lm(efficiency ~ conductivity_Micromhos*Depth_avg, data = all_data)
+summary(lmEffXCond)
+
+```
+
+```{r resp x nitrate}
+
+ggplot(all_data, aes(y = efficiency, x = nitrate_ppb, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Nitrate", y = "Respiration Efficiency") +
+  ggtitle("Effects of Farming on Resp Efficiency for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE) +
+   coord_cartesian(ylim = c(0, 1), xlim= c(0, 10))
+
+ggplot(all_data, aes(y = resp1, x = nitrate_ppb, color = factor(Depth_avg))) + 
+  geom_point() + 
+  labs(x = "Nitrate", y = "Respiration") +
+  ggtitle("Effects of Farming on Respiration for Soil Across Depths") +
+  theme_minimal() +
+  stat_smooth(method = "lm", se = FALSE) +
+  coord_cartesian(ylim = c(0, 2), xlim= c(0, 10))
+
+lmEffXNitrate <- lm(efficiency ~ nitrate_ppb*Depth_avg, data = all_data)
+summary(lmEffXNitrate)
+
+```
+
+## ANALYZING FOR WHAT YEAR YOU SEE A DIFFERENCE
+### 0 TO 15
+```{r 0to15}
+
+modified05 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 5) %>%
+  filter(resp1>0)
+sum(modified05$years_RA == 5)
+t.test(resp1 ~ years_RA, data = modified05)
+
+```
+
+```{r}
+
+modified08 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 8) %>%
+  filter(resp1>0)
+sum(modified08$years_RA == 8)
+t.test(resp1 ~ years_RA, data = modified08)
+
+```
+
+```{r}
+
+modified09 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 9) %>%
+  filter(resp1>0)
+sum(modified09$years_RA == 9)
+t.test(resp1 ~ years_RA, data = modified09)
+
+```
+
+```{r}
+modified011 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 11) %>%
+  filter(resp1>0)
+sum(modified011$years_RA == 11)
+
+```
+
+```{r}
+
+modified012 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 12) %>%
+  filter(resp1>0)
+sum(modified012$years_RA == 12)
+
+```
+
+### 15 TO 30
+```{r 0to15}
+
+modified15 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 5) %>%
+  filter(resp1>0)
+sum(modified15$years_RA == 5)
+t.test(resp1 ~ years_RA, data = modified15)
+
+```
+
+```{r}
+
+modified18 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 8) %>%
+  filter(resp1>0)
+sum(modified18$years_RA == 8)
+t.test(resp1 ~ years_RA, data = modified18)
+
+```
+
+```{r}
+
+modified19 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 9) %>%
+  filter(resp1>0)
+sum(modified19$years_RA == 9)
+t.test(resp1 ~ years_RA, data = modified19)
+
+```
+
+```{r}
+
+modified111 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 11) %>%
+  filter(resp1>0)
+sum(modified111$years_RA == 11)
+
+```
+
+```{r}
+
+modified112 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 12) %>%
+  filter(resp1>0)
+sum(modified112$years_RA == 12)
+
+```

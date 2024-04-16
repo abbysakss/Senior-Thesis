@@ -42,6 +42,13 @@ depth_100To150 <- readRDS(here::here("3_Clean-data", "data_100To150.rds"))
 lmNitrate <- lm(nitrate_ppb ~ years_RA+Depth_avg, data = all_data)
 summary(lmNitrate)
 
+resN <- resid(lmNitrate)
+plot(fitted(lmNitrate), resN)
+abline(0,0)
+qqnorm(resN)
+qqline(resN)
+plot(density(resN))
+
 all_data <- all_data %>%
   filter(sample_ID != "Compost")
 
@@ -221,5 +228,102 @@ group_by(outside_data, Depth_avg) %>%
     mean = mean(nitrate_ppb, na.rm = TRUE),
     sd = sd(nitrate_ppb, na.rm = TRUE)
   )
+
+```
+
+## ANALYZING FOR WHAT YEAR YOU SEE A DIFFERENCE
+### 0 TO 15
+```{r 0to15}
+
+modified05 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 5) %>%
+    filter(nitrate_ppb>0)
+sum(modified05$years_RA == 5)
+
+```
+
+```{r}
+
+modified08 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 8) %>%
+  filter(nitrate_ppb>0)
+sum(modified08$years_RA == 8)
+t.test(nitrate_ppb ~ years_RA, data = modified08)
+
+```
+
+```{r}
+
+modified09 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 9) %>%
+  filter(nitrate_ppb>0)
+sum(modified09$years_RA == 9)
+t.test(nitrate_ppb ~ years_RA, data = modified09)
+
+```
+
+```{r}
+modified011 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 11) %>%
+  filter(nitrate_ppb>0)
+sum(modified011$years_RA == 11)
+
+```
+
+```{r}
+
+modified012 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 12) %>%
+  filter(nitrate_ppb>0)
+sum(modified012$years_RA == 12)
+
+```
+
+### 15 TO 30
+```{r 0to15}
+
+modified15 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 5) %>%
+  filter(nitrate_ppb>0)
+sum(modified15$years_RA == 5)
+
+```
+
+```{r}
+
+modified18 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 8) %>%
+  filter(nitrate_ppb>0)
+sum(modified18$years_RA == 8)
+t.test(nitrate_ppb ~ years_RA, data = modified18)
+
+```
+
+```{r}
+
+modified19 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 9) %>%
+  filter(nitrate_ppb>0)
+sum(modified19$years_RA == 9)
+t.test(nitrate_ppb ~ years_RA, data = modified19)
+
+```
+
+```{r}
+modified111 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 11) %>%
+  filter(nitrate_ppb>0)
+sum(modified111$years_RA == 11)
+t.test(nitrate_ppb ~ years_RA, data = modified111)
+
+```
+
+```{r}
+
+modified112 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 12) %>%
+  filter(nitrate_ppb>0)
+sum(modified112$years_RA == 12)
+t.test(nitrate_ppb ~ years_RA, data = modified112)
 
 ```

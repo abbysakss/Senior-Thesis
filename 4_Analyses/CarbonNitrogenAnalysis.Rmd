@@ -43,14 +43,32 @@ all_data <- all_data %>%
 
 ```{r linear models}
 
-lmCarbon <- lm(percent_Carbon ~ years_RA+Depth_avg, data = all_data)
+lmCarbon <- lm(percent_Carbon ~ years_RA + Depth_avg, data = all_data)
 summary(lmCarbon)
+resC <- resid(lmCarbon)
+plot(fitted(lmCarbon), resC)
+abline(0,0)
+qqnorm(resC)
+qqline(resC)
+plot(density(resC))
 
-lmNitrogen <- lm(percent_Nitrogen ~ years_RA+Depth_avg, data = all_data)
+lmNitrogen <- lm(percent_Nitrogen ~ years_RA + Depth_avg, data = all_data)
 summary(lmNitrogen)
+resN <- resid(lmNitrogen)
+plot(fitted(lmNitrogen), resN)
+abline(0,0)
+qqnorm(resN)
+qqline(resN)
+plot(density(resN))
 
-lmCN <- lm(cN_ratio ~ years_RA+Depth_avg, data = all_data)
+lmCN <- lm(cN_ratio ~ years_RA + Depth_avg, data = all_data)
 summary(lmCN)
+resCN <- resid(lmCN)
+plot(fitted(lmCN), resCN)
+abline(0,0)
+qqnorm(resCN)
+qqline(resCN)
+plot(density(resCN))
 
 ```
 
@@ -241,4 +259,116 @@ ggboxplot(all_data, x = "subsample_Depth", y = "cN_ratio",
   theme_minimal()
 
 ```
+
+## ANALYZING FOR WHAT YEAR YOU SEE A DIFFERENCE
+### 0 TO 15
+```{r 0to15}
+
+modified05 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 5)
+sum(modified05$years_RA == 5)
+t.test(percent_Carbon ~ years_RA, data = modified05)
+t.test(percent_Nitrogen ~ years_RA, data = modified05)
+t.test(cN_ratio ~ years_RA, data = modified05)
+
+```
+
+```{r}
+
+modified08 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 8)
+sum(modified08$years_RA == 8)
+t.test(percent_Carbon ~ years_RA, data = modified08)
+t.test(percent_Nitrogen ~ years_RA, data = modified08)
+t.test(cN_ratio ~ years_RA, data = modified08)
+
+```
+
+```{r}
+
+modified09 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 9)
+sum(modified09$years_RA == 9)
+t.test(percent_Carbon ~ years_RA, data = modified09)
+t.test(percent_Nitrogen ~ years_RA, data = modified09)
+t.test(cN_ratio ~ years_RA, data = modified09)
+
+```
+
+```{r}
+modified011 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 11)
+sum(modified011$years_RA == 11)
+t.test(percent_Carbon ~ years_RA, data = modified011)
+t.test(percent_Nitrogen ~ years_RA, data = modified011)
+t.test(cN_ratio ~ years_RA, data = modified011)
+
+```
+
+```{r}
+
+modified012 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 12)
+sum(modified012$years_RA == 12)
+t.test(percent_Carbon ~ years_RA, data = modified012)
+t.test(percent_Nitrogen ~ years_RA, data = modified012)
+t.test(cN_ratio ~ years_RA, data = modified012)
+
+```
+
+### 15 TO 30
+```{r 0to15}
+
+modified15 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 5)
+sum(modified15$years_RA == 5)
+t.test(percent_Carbon ~ years_RA, data = modified15)
+t.test(percent_Nitrogen ~ years_RA, data = modified15)
+t.test(cN_ratio ~ years_RA, data = modified15)
+
+```
+
+```{r}
+
+modified18 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 8)
+sum(modified18$years_RA == 8)
+t.test(percent_Carbon ~ years_RA, data = modified18)
+t.test(percent_Nitrogen ~ years_RA, data = modified18)
+t.test(cN_ratio ~ years_RA, data = modified18)
+
+```
+
+```{r}
+
+modified19 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 9)
+sum(modified19$years_RA == 9)
+t.test(percent_Carbon ~ years_RA, data = modified19)
+t.test(percent_Nitrogen ~ years_RA, data = modified19)
+t.test(cN_ratio ~ years_RA, data = modified19)
+
+```
+
+```{r}
+modified111 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 11)
+sum(modified111$years_RA == 11)
+t.test(percent_Carbon ~ years_RA, data = modified111)
+t.test(percent_Nitrogen ~ years_RA, data = modified111)
+t.test(cN_ratio ~ years_RA, data = modified111)
+
+```
+
+```{r}
+
+modified112 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 12)
+sum(modified112$years_RA == 12)
+t.test(percent_Carbon ~ years_RA, data = modified112)
+t.test(percent_Nitrogen ~ years_RA, data = modified112)
+t.test(cN_ratio ~ years_RA, data = modified112)
+
+```
+
 

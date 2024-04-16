@@ -61,6 +61,20 @@ lmSaltPH <- lm(pH_salt ~ years_RA+Depth_avg, data = all_data)
 summary(lmSaltPH)
 sigma(lmWaterPH)
 
+resW <- resid(lmWaterPH)
+plot(fitted(lmWaterPH), resW)
+abline(0,0)
+qqnorm(resW)
+qqline(resW)
+plot(density(resW))
+
+resS <- resid(lmSaltPH)
+plot(fitted(lmSaltPH), resS)
+abline(0,0)
+qqnorm(resS)
+qqline(resS)
+plot(density(resS))
+
 ```
 
 ```{r lms profile}
@@ -221,6 +235,30 @@ group_by(all_data, Depth_avg) %>%
     mean = mean(pH_water, na.rm = TRUE),
     sd = sd(pH_water, na.rm = TRUE)
   )
+
+```
+
+```{r}
+
+modified <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 5)
+t.test(pH_water ~ years_RA, data = modified)
+t.test(pH_salt ~ years_RA, data = modified)
+
+modified2 <- depth_0To15 %>% 
+  filter(years_RA == 0 | years_RA == 8)
+t.test(pH_water ~ years_RA, data = modified2)
+t.test(pH_salt ~ years_RA, data = modified2)
+
+modified3 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 5)
+t.test(pH_water ~ years_RA, data = modified3)
+t.test(pH_salt ~ years_RA, data = modified3)
+
+modified4 <- depth_15To30 %>% 
+  filter(years_RA == 0 | years_RA == 8)
+t.test(pH_water ~ years_RA, data = modified4)
+t.test(pH_salt ~ years_RA, data = modified4)
 
 ```
 
@@ -414,6 +452,8 @@ model <- aov(resp1 ~ years_RA + Depth_avg, data = respiration_df)
 summary(model)
 
 ```
+
+
 
 
 
